@@ -5,9 +5,18 @@ using System.Collections.Generic;
 using System.Linq;
 
 public class Table : MonoBehaviour {
-	public Transform deckObj;
 	public List<Card> deck = new List<Card>();
 	public List<Card> discard = new List<Card> ();
+	public List<Card> playStack1 = new List<Card>();
+	public List<Card> playStack2 = new List<Card> ();
+	public List<Card> playStack3 = new List<Card> ();
+	public List<Card> playStack4 = new List<Card> ();
+
+	public PlayStacksController playStackController;
+	public DeckController deckController;
+	public ButtonsAndTextController btnAndTxtController;
+
+
 
 	// methods around the table
 	// deal x count
@@ -27,10 +36,10 @@ public class Table : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-		deck.AddRange (BuildStandardDeck ());
-		if (this.shuffleOnStart == true) {
-			this.deck = Shuffle (this.deck, 10);
-		}
+//		deck.AddRange (BuildStandardDeck ());
+//		if (this.shuffleOnStart == true) {
+//			this.deck = Shuffle (this.deck, 3);
+//		}
 		//Debug.Log (DeckArtManager.Instance.commonBack.comName);
 		//shuffle ();
 	}
@@ -48,12 +57,12 @@ public class Table : MonoBehaviour {
 			foreach(var card in hand)
 			{
 				Sprite sCheck = DeckArtManager.Instance.FindCardSprite(card.cardValue, card.cardSuit);
-				string status = sCheck == null ? "..." : "SpriteFound!";
+//				string status = sCheck == null ? "..." : "SpriteFound!";
 				if(sCheck != null)
 				{
 					this.PlayerBCards[counter].sprite = sCheck;
 				}
-				Debug.Log(string.Format("{0} of {1} -- SpriteStatus: {2}", card.cardValue, card.cardSuit, status));
+				//Debug.Log(string.Format("{0} of {1} -- SpriteStatus: {2}", card.cardValue, card.cardSuit, status));
 				counter++;
 			}
 		}
@@ -90,7 +99,7 @@ public class Table : MonoBehaviour {
 		return thisObject;
 	}
 
-	List<Card> Shuffle(List<Card> d, int ruffles = 1)
+	public List<Card> Shuffle(List<Card> d, int ruffles = 1)
 	{
 		Dictionary<int, Card> shuffler = new Dictionary<int, Card> ();
 
@@ -135,5 +144,7 @@ public class Table : MonoBehaviour {
 			return shuffler.Values.ToList ();
 		}
 	}
+
+
 
 }
