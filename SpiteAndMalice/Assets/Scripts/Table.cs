@@ -15,7 +15,7 @@ public class Table : MonoBehaviour {
 	public PlayStacksController playStackController;
 	public DeckController deckController;
 	public ButtonsAndTextController btnAndTxtController;
-
+	public int rngSeed = 0;
 
 
 	// methods around the table
@@ -32,6 +32,10 @@ public class Table : MonoBehaviour {
 	//public int optn_baseOnDeal = 10;
 	//public int optb_JacksOnDeal =  
 
+	void Awake()
+	{
+		Random.seed = rngSeed;
+	}
 
 	// Use this for initialization
 	void Start () {

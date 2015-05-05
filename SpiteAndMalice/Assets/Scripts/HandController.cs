@@ -32,6 +32,14 @@ public class HandController : MonoBehaviour {
 			this.Card3.sprite = DeckArtManager.Instance.FindCardSprite(cards[2].cardValue, cards[2].cardSuit);
 			this.Card4.sprite = DeckArtManager.Instance.FindCardSprite(cards[3].cardValue, cards[3].cardSuit);
 			this.Card5.sprite = DeckArtManager.Instance.FindCardSprite(cards[4].cardValue, cards[4].cardSuit);
+
+			this.Card1.GetComponent<CardUIController>().cardData = cards[0];
+			this.Card2.GetComponent<CardUIController>().cardData = cards[1];
+			this.Card3.GetComponent<CardUIController>().cardData = cards[2];
+			this.Card4.GetComponent<CardUIController>().cardData = cards[3];
+			this.Card5.GetComponent<CardUIController>().cardData = cards[4];
+
+
 		}
 
 	}
@@ -50,7 +58,7 @@ public class HandController : MonoBehaviour {
 		//Debug.Log ("Pointer Exit");
 		Vector2 aPos = this.GetComponent<RectTransform> ().anchoredPosition;
 		this.GetComponent<RectTransform> ().anchoredPosition = new Vector2 (aPos.x, aPos.y - 50);
-		this.GetComponent<HorizontalLayoutGroup> ().spacing = -300;
+		this.GetComponent<HorizontalLayoutGroup> ().spacing = -175;
 	}
 	
 	public void OnMouseOverCard(BaseEventData eData)

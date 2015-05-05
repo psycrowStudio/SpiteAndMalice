@@ -128,6 +128,8 @@ public class GameLogicManager : Singleton<GameLogicManager> {
 		foreach (var card in this.markedCards) {
 			count++;
 			card.order = count;
+			// write back to the UI object
+			card.cardObj.ActionBox.MoveNumber.text = string.Format("{0}", count);
 		}
 	}
 
@@ -135,14 +137,13 @@ public class GameLogicManager : Singleton<GameLogicManager> {
 	{
 		switch (pile) {
 			case 1:
-				
 				if(this.table.playStack1.Count > 0)
 				{
 					if( card.cardValue == Card.CardValue.Joker && (this.table.playStack1[this.table.playStack1.Count-1].cardValue != Card.CardValue.Ace || this.table.playStack1[this.table.playStack1.Count-1].cardValue != Card.CardValue.King))
 					{
 						return true;
 					}
-					else if( (int)this.table.playStack1[this.table.playStack1.Count-1].cardValue == ((int)card.cardValue)-1)
+					else if( (int)this.table.playStack1[this.table.playStack1.Count-1].cardValue == ((int)card.cardValue)-1) // TODO: add joker support 
 					{
 						// check if King, and trigger clean-up on the end of turn? or immediately?
 						return true;
@@ -156,10 +157,15 @@ public class GameLogicManager : Singleton<GameLogicManager> {
 				{
 					return true;
 				}
+				else if(this.markedCards.Find((e) => { return e.destinationNumber == 1 && (int)e.card.cardValue == ((int)card.cardValue)-1; } ) != null)
+				{
+					return true;
+				}
 				else
 				{
 					return false;
 				}
+
 			case 2:
 				
 				if(this.table.playStack2.Count > 0)
@@ -256,7 +262,7 @@ public class GameLogicManager : Singleton<GameLogicManager> {
 public class MarkedCard
 {
 	public Card card { get; set; }
-	public Transform cardObj { get; set; }
+	public CardUIController cardObj { get; set; }
 	public int destinationNumber { get; set; }
 	public string destinationPile { get; set; }
 	public int order { get; set; }

@@ -13,6 +13,7 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 	public enum CardUIStates {idle = 0, clicked = 1, activated = 2, played = 3 }
 	public CardUIStates state = CardUIStates.idle;
 	public CardUIStates stateLastFrame;
+	public Card cardData;
 
 	public enum CardBehaviorPattern
 	{
@@ -61,6 +62,12 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 			}
 
 		}
+
+		if ( EventSystem.current.currentSelectedGameObject == this.gameObject && (Input.GetKeyUp (KeyCode.Escape))) {
+			//Debug.Log("!!!!!!!!!!!!");
+			EventSystem.current.SetSelectedGameObject(null, new BaseEventData(EventSystem.current));
+
+		}
 	}
 
 	public void HandleOnClick(BaseEventData eData)
@@ -83,7 +90,7 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 		// double click
 		if (clickCount == 2 && this.state != CardUIStates.idle) {
 			// enter code here
-			Debug.Log ("Reset Card To Idle" + " -- " + interval);
+			//Debug.Log ("Reset Card To Idle" + " -- " + interval);
 			if (this.state == CardUIStates.activated) {
 				this.state = CardUIStates.idle;
 			}
@@ -102,7 +109,7 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 		//Debug.Log("test");
 		if (this.state == CardUIStates.idle) {
 			this.state = CardUIStates.activated;
-			this.ActionBox.MoveNumber.text = string.Format("{0}", GameLogicManager.Instance.markedCards.Count == 0 ? 1 : GameLogicManager.Instance.markedCards.Count);
+			this.ActionBox.MoveNumber.text = string.Format("{0}", GameLogicManager.Instance.markedCards.Count+1);
 		}
 	}
 
@@ -113,7 +120,16 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 		//var pointer = new PointerEventData(EventSystem.current);
 		// convert to a 2D position
 		//pointer.position = po
-		
+		if (pointerData == null && this.ActionBox.PileType.sprite != null)
+		{
+			return;
+		}
+		else if(pointerData == null)
+		{
+			this.state = CardUIStates.idle;
+			return;
+		}
+
 		var raycastResults = new List<RaycastResult>();
 		EventSystem.current.RaycastAll(pointerData, raycastResults);
 		
@@ -129,15 +145,23 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 						//this.GetComponent<RectTransform>().localPosition = Vector3.zero;
 						if(GameLogicManager.Instance.CanPlayCard(GameLogicManager.Instance.playerB.goalStack[GameLogicManager.Instance.playerB.goalStack.Count-1], Int32.Parse(raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1))))
 						{
-							this.ActionBox.PileType.sprite = raycastResults [0].gameObject.GetComponent<Image> ().sprite;
-							this.ActionBox.PileType.color = Color.white;
-							this.ActionBox.PileNumber.text = raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1);
-							GameLogicManager.Instance.AddMarkedCard(new MarkedCard(){ 
+							MarkedCard mark = new MarkedCard(){ 
 								card = GameLogicManager.Instance.playerB.goalStack[GameLogicManager.Instance.playerB.goalStack.Count-1],
+								cardObj = this,
 								destinationNumber = Int32.Parse(raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1)),
 								destinationPile = raycastResults [0].gameObject.tag,
 								order = GameLogicManager.Instance.markedCards.Count == 0 ? 1 : GameLogicManager.Instance.markedCards.Count
-								});
+							};
+							if(GameLogicManager.Instance.markedCards.IndexOf(mark) != -1)
+							{
+								// card already in the pile.
+								return;
+							}
+								
+							this.ActionBox.PileType.sprite = raycastResults [0].gameObject.GetComponent<Image> ().sprite;
+							this.ActionBox.PileType.color = Color.white;
+							this.ActionBox.PileNumber.text = raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1);
+							GameLogicManager.Instance.AddMarkedCard(mark);
 						}
 						else
 						{
@@ -167,25 +191,48 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 					break;
 
 				case CardBehaviorPattern.Hand:
-					if (raycastResults [0].gameObject.tag.Contains ("PlayStack")) {
+				Card inHand = GameLogicManager.Instance.playerB.hand.Find((match) => { return match == this.cardData; });
+				if (raycastResults [0].gameObject.tag.Contains ("PlayStack")) {
 						//this.transform.SetParent(raycastResults[0].gameObject.transform);
 						//this.GetComponent<RectTransform>().localPosition = Vector3.zero;
-						this.ActionBox.PileType.sprite = raycastResults [0].gameObject.GetComponent<Image> ().sprite;
-						this.ActionBox.PileType.color = Color.white;
-						this.ActionBox.PileNumber.text = raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1);
-					}
-					else if (raycastResults [0].gameObject.tag.Contains ("MyDiscard")) {
-						this.ActionBox.PileType.sprite = raycastResults [0].gameObject.GetComponent<Image> ().sprite;
-						this.ActionBox.PileType.color = Color.white;
-						this.ActionBox.PileNumber.text = raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1);
-						//this.transform.SetParent(raycastResults[0].gameObject.transform);
-						//this.GetComponent<RectTransform>().localPosition = Vector3.zero;
-						
+
+						if(GameLogicManager.Instance.CanPlayCard(inHand, Int32.Parse(raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1))))
+						{
+							MarkedCard mark = new MarkedCard(){ 
+								card = inHand,
+								cardObj = this,
+								destinationNumber = Int32.Parse(raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1)),
+								destinationPile = raycastResults [0].gameObject.tag,
+								order = GameLogicManager.Instance.markedCards.Count == 0 ? 1 : GameLogicManager.Instance.markedCards.Count
+							};
+							if(GameLogicManager.Instance.markedCards.Find((c) => { return c.card == inHand && c.destinationNumber == mark.destinationNumber && c.destinationPile == mark.destinationPile; }) != null)
+							{
+								// card already in the pile.
+								return;
+							}
+							this.ActionBox.PileType.sprite = raycastResults [0].gameObject.GetComponent<Image> ().sprite;
+							this.ActionBox.PileType.color = Color.white;
+							this.ActionBox.PileNumber.text = raycastResults [0].gameObject.tag.Substring (raycastResults [0].gameObject.tag.Length - 1);
+							GameLogicManager.Instance.AddMarkedCard(mark);
+						}
+						else
+						{
+							GameLogicManager.Instance.RemoveMarkedCard(inHand);
+							this.state = CardUIStates.idle;
+						}
 					}
 					else
 					{
-						GameLogicManager.Instance.RemoveMarkedCard(GameLogicManager.Instance.playerB.goalStack[GameLogicManager.Instance.playerB.goalStack.Count-1]);
-						this.state = CardUIStates.idle;
+						if (this.ActionBox.PileType.sprite != null)
+						{
+							return;
+						}
+						else
+						{
+							GameLogicManager.Instance.RemoveMarkedCard(inHand);
+							this.state = CardUIStates.idle;
+							return;
+						}
 					}
 					break;
 				default:
@@ -194,12 +241,21 @@ public class CardUIController : MonoBehaviour, ISelectHandler, IDeselectHandler 
 					break;
 				}
 			}
-			else
+			else // raycast hit nothing
 			{
 				//Debug.Log(string.Format("Hit Something: {0}", raycastResults [0].gameObject.tag));
-				GameLogicManager.Instance.RemoveMarkedCard(GameLogicManager.Instance.playerB.goalStack[GameLogicManager.Instance.playerB.goalStack.Count-1]);
-				this.state = CardUIStates.idle;
+				//GameLogicManager.Instance.RemoveMarkedCard(GameLogicManager.Instance.playerB.goalStack[GameLogicManager.Instance.playerB.goalStack.Count-1]);
+				//this.state = CardUIStates.idle;
 				//GameLogicManager.Instance.RemoveMarkedCard(
+				if (this.ActionBox.PileType.sprite != null)
+				{
+					return;
+				}
+				else
+				{
+					this.state = CardUIStates.idle;
+					return;
+				}
 			}
 		}
 }
